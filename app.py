@@ -25,10 +25,6 @@ def vk_callback():
     if data["type"] == "confirmation":
         return CONFIRMATION_TOKEN
 
-    # проверка секретного ключа
-    if data.get("secret") != SECRET_KEY:
-        return "ok"
-
     # новое сообщение
     if data["type"] == "message_new":
         user_id = data["object"]["message"]["from_id"]
