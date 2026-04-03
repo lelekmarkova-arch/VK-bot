@@ -4,7 +4,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "vk1.a.Yl53xSewO4g1Zsy1uP9eQkbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
+TOKEN = "vk1.a.Yl53xSewO4g1Zsy1u9eQkbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
 CONFIRMATION_TOKEN = "d92bddc6"
 SECRET_KEY = "mysecret123"
 
@@ -35,27 +35,34 @@ def send_message(user_id, message):
     })
 
 
+# 🌐 ПИНГ ДЛЯ UPTIMEROBOT
+@app.route("/ping", methods=["GET"])
+def ping():
+    return "OK", 200
+
+
+# 🤖 ВК CALLBACK
 @app.route("/", methods=["POST"])
 def vk_callback():
-    data = request.json
+    data = request.json or {}
 
-    # 🔑 подтверждение сервера
-    if data["type"] == "confirmation":
+    # 🔑 подтверждение сервера VK
+    if data.get("type") == "confirmation":
         return CONFIRMATION_TOKEN
 
     # 💬 новое сообщение
-    if data["type"] == "message_new":
-        user_id = data["object"]["message"]["from_id"]
-        text = data["object"]["message"]["text"].lower()
+    if data.get("type") == "message_new":
+        message = data["object"]["message"]
+        user_id = message.get("from_id")
+        text = message.get("text", "").lower()
 
         # 🟢 старт
         if text in ["начать", "start", ""]:
             reply = (
                 "👋 Привет! Я бот «Фемистокл»\n\n"
                 "📚 Я помогаю малому бизнесу:\n"
-                "• находить шаблоны документов\n"
-                "• отвечать на юридические вопросы\n\n"
-                "👇 Выбери, что тебе нужно:"
+                "• находить шаблоны документов\n\n"
+                "👇 Выбери нужный раздел:"
             )
 
         # 📄 шаблоны
@@ -64,22 +71,20 @@ def vk_callback():
                 "📄 Шаблоны документов:\n"
                 "• договор аренды\n"
                 "• договор оказания услуг\n"
-                "• NDA\n\n"
-                "Напиши, какой нужен 👍"
+                "• договор подряда\n"
+                "• претензия\n"
+                "• жалоба\n"
             )
 
-        # ❓ вопросы
+        # ❓ раздел (пока без реальных ответов)
         elif "вопрос" in text:
             reply = (
-                "❓ Задай юридический вопрос\n\n"
-                "Например:\n"
-                "• налоги ИП\n"
-                "• регистрация бизнеса\n"
-                "• штрафы"
+                "❓ Сейчас доступны только шаблоны документов.\n"
+                "Выберите раздел 📄"
             )
 
         else:
-            reply = "Выбери кнопку ниже 👇"
+            reply = "Выберите кнопку ниже 👇"
 
         send_message(user_id, reply)
 
