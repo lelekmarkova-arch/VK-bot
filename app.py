@@ -5,7 +5,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "ВСТАВЬ_СЮДА_ТОКЕН"
+TOKEN = "vk1.a.Yl53xSewO4g1Zsy1uP9eQkbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
 CONFIRMATION_TOKEN = "d92bddc6"
 
 
