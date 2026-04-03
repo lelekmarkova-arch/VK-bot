@@ -1,10 +1,11 @@
 import json
 import requests
+import random
 from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "vk1.a.Yl53xSewO4g1Zsy1u9eKqbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
+TOKEN = "ВСТАВЬ_СЮДА_ТОКЕН"
 CONFIRMATION_TOKEN = "d92bddc6"
 
 
@@ -28,7 +29,7 @@ def send_message(user_id, message):
         requests.post("https://api.vk.com/method/messages.send", data={
             "user_id": user_id,
             "message": message,
-            "random_id": 0,
+            "random_id": random.randint(1, 10**9),
             "keyboard": get_keyboard(),
             "access_token": TOKEN,
             "v": "5.131"
@@ -37,7 +38,7 @@ def send_message(user_id, message):
         print("SEND ERROR:", e)
 
 
-# 🌐 ПИНГ ДЛЯ RENDER / UPTIMEROBOT
+# 🌐 ПИНГ (для Render / UptimeRobot)
 @app.route("/ping", methods=["GET"])
 def ping():
     return "OK", 200
@@ -46,10 +47,9 @@ def ping():
 # 🤖 VK CALLBACK
 @app.route("/", methods=["POST"])
 def vk_callback():
-
     data = request.get_json(silent=True) or {}
 
-    print("VK DATA:", data)  # 🔥 ЛОГ (очень важно для отладки)
+    print("VK DATA:", data)
 
     # 🔑 подтверждение сервера VK
     if data.get("type") == "confirmation":
@@ -58,17 +58,19 @@ def vk_callback():
     # 💬 новое сообщение
     if data.get("type") == "message_new":
 
-        message = data.get("object", {}).get("message", {})
-        user_id = message.get("from_id")
-        text = message.get("text", "").lower()
+        msg = data.get("object", {}).get("message", {})
+        user_id = msg.get("from_id")
+        text = (msg.get("text") or "").lower()
+
+        if not user_id:
+            return "ok"
 
         # 🟢 старт
         if text in ["начать", "start", ""]:
             reply = (
                 "👋 Привет! Я бот «Фемистокл»\n\n"
                 "📚 Я помогаю малому бизнесу:\n"
-                "• шаблоны документов\n\n"
-                "👇 Выбери нужный раздел:"
+                "• шаблоны документов\n"
             )
 
         # 📄 шаблоны
@@ -82,14 +84,18 @@ def vk_callback():
                 "• жалоба"
             )
 
-        # ❓ вопросы (пока заглушка)
+        # ❓ вопросы (заглушка)
         elif "вопрос" in text:
             reply = "❓ Сейчас доступны только шаблоны документов."
 
         else:
             reply = "Выберите кнопку ниже 👇"
 
-        if user_id:
-            send_message(user_id, reply)
+        send_message(user_id, reply)
 
     return "ok"
+
+
+# 🔥 ВАЖНО ДЛЯ RENDER
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
