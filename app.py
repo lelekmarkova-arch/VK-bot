@@ -8,18 +8,32 @@ app = Flask(__name__)
 TOKEN = "vk1.a.Yl53xSewO4g1Zsy1uP9eQkbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
 CONFIRMATION_TOKEN = "d92bddc6"
 
-# 🔥 анти-дубли
 processed_events = set()
 
+# 📄 ДОКУМЕНТЫ VK
+DOCS = {
+    "штатка": "doc270527743_702121234",
+    "согласие": "doc270527743_702121233",
+    "купля": "doc270527743_702121232",
+    "комиссия": "doc270527743_702121241"
+}
 
-# 📌 КНОПКИ
+# 🎛 КНОПКИ
 def get_keyboard():
     keyboard = {
         "one_time": False,
         "buttons": [
             [
-                {"action": {"type": "text", "label": "📄 Шаблоны документов"}, "color": "primary"},
-                {"action": {"type": "text", "label": "❓ Вопросы"}, "color": "secondary"}
+                {"action": {"type": "text", "label": "📊 Штатное расписание"}, "color": "primary"}
+            ],
+            [
+                {"action": {"type": "text", "label": "🛡️ Согласие ПД"}, "color": "primary"}
+            ],
+            [
+                {"action": {"type": "text", "label": "🏠 Купля-продажа"}, "color": "secondary"}
+            ],
+            [
+                {"action": {"type": "text", "label": "📄 Договор комиссии"}, "color": "secondary"}
             ]
         ]
     }
@@ -27,11 +41,12 @@ def get_keyboard():
 
 
 # 📤 ОТПРАВКА СООБЩЕНИЯ
-def send_message(user_id, message):
+def send_message(user_id, message=None, attachment=None):
     try:
         requests.post("https://api.vk.com/method/messages.send", data={
             "user_id": user_id,
             "message": message,
+            "attachment": attachment,
             "random_id": random.randint(1, 10**9),
             "keyboard": get_keyboard(),
             "access_token": TOKEN,
@@ -41,7 +56,7 @@ def send_message(user_id, message):
         print("VK SEND ERROR:", e)
 
 
-# 🔥 ПИНГ
+# 🚀 ping для Render
 @app.route("/ping", methods=["GET"])
 def ping():
     return "OK", 200
@@ -50,74 +65,51 @@ def ping():
 # 🤖 VK CALLBACK
 @app.route("/", methods=["POST"])
 def vk_callback():
-
     data = request.get_json(silent=True) or {}
 
-    print("VK RAW DATA:", data)
-
-    # 🔑 подтверждение VK
     if data.get("type") == "confirmation":
         return CONFIRMATION_TOKEN
 
-    # ❗ игнорируем всё кроме новых сообщений
     if data.get("type") != "message_new":
         return "ok"
 
-    # ❗ анти-дубли
     event_id = data.get("event_id")
     if event_id in processed_events:
         return "ok"
     processed_events.add(event_id)
 
-    # 💬 сообщение
     msg = data.get("object", {}).get("message", {})
     user_id = msg.get("from_id")
     text = (msg.get("text") or "").lower()
 
-    print("MESSAGE:", user_id, text)
-
     if not user_id:
         return "ok"
 
-    # 🟢 старт
+    # 👋 старт
     if text in ["начать", "start", "привет"]:
-        reply = (
-            "👋 Привет! Я бот «Фемистокл»\n\n"
-            "📚 Я помогаю малому бизнесу:\n"
-            "• шаблоны документов\n"
-            "• договоры\n"
-            "• претензии\n"
-        )
+        send_message(user_id, "👋 Привет! Выберите документ ниже 👇")
 
-    # 📄 шаблоны
-    elif "шаблон" in text:
-        reply = (
-            "📄 Шаблоны документов:\n"
-            "• договор аренды\n"
-            "• договор купли-продажи\n"
-            "• договор подряда\n"
-            "• претензия\n"
-            "• жалоба"
-        )
+    # 📊 штатка
+    elif "штат" in text:
+        send_message(user_id, "📊 Штатное расписание", DOCS["штатка"])
 
-    # ❓ вопросы
-    elif "вопрос" in text:
-        reply = (
-            "❓ Вопросы:\n\n"
-            "Пока бот работает только с шаблонами документов:\n"
-            "📄 договор аренды\n"
-            "📄 договор купли-продажи\n"
-            "📄 договор подряда"
-        )
+    # 🛡 согласие
+    elif "соглас" in text:
+        send_message(user_id, "🛡️ Согласие на обработку ПД", DOCS["согласие"])
+
+    # 🏠 купля-продажа
+    elif "купля" in text or "продаж" in text:
+        send_message(user_id, "🏠 Договор купли-продажи", DOCS["купля"])
+
+    # 📄 комиссия
+    elif "комис" in text:
+        send_message(user_id, "📄 Договор комиссии", DOCS["комиссия"])
 
     else:
-        reply = "Выберите кнопку ниже 👇"
-
-    send_message(user_id, reply)
+        send_message(user_id, "Выберите кнопку ниже 👇")
 
     return "ok"
 
 
-# 🚀 запуск
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
