@@ -5,7 +5,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TOKEN = "vk1.a.Yl53xSewO4g1Zsy1uP9eQkbwgyp8lELb4noR0GV-iz9f3Pu3Z7nZDqAwXiTqfiQkKmR38iULc3eu5IaAr4Wad5a5uRofrt2Q9Gmd4UcitbfGgObbgysfRYCPcS7VqiQZNS7Ul0y_e0DDjZV-9bYhUJFI2MJMbeBimIlw3nxSpXRlSm7pGgaVzOuI52EUgojPR4ngJEyI7X12M5IfrFidUQ"
+TOKEN = "ВСТАВЬ_СЮДА_ТОКЕН_СООБЩЕСТВА"
 CONFIRMATION_TOKEN = "d92bddc6"
 
 processed_events = set()
@@ -40,18 +40,22 @@ def get_keyboard():
     return json.dumps(keyboard, ensure_ascii=False)
 
 
-# 📤 ОТПРАВКА СООБЩЕНИЯ
+# 📤 ОТПРАВКА СООБЩЕНИЯ (ИСПРАВЛЕНО)
 def send_message(user_id, message=None, attachment=None):
     try:
-        requests.post("https://api.vk.com/method/messages.send", data={
-            "user_id": user_id,
+        params = {
+            "peer_id": user_id,   # 🔥 ВАЖНО: именно peer_id
             "message": message,
-            "attachment": attachment,
             "random_id": random.randint(1, 10**9),
-            "keyboard": get_keyboard(),
             "access_token": TOKEN,
             "v": "5.131"
-        })
+        }
+
+        if attachment:
+            params["attachment"] = attachment
+
+        requests.post("https://api.vk.com/method/messages.send", data=params)
+
     except Exception as e:
         print("VK SEND ERROR:", e)
 
@@ -62,7 +66,7 @@ def ping():
     return "OK", 200
 
 
-# 🤖 VK CALLBACK
+# 🤖 CALLBACK VK
 @app.route("/", methods=["POST"])
 def vk_callback():
     data = request.get_json(silent=True) or {}
@@ -106,7 +110,7 @@ def vk_callback():
         send_message(user_id, "📄 Договор комиссии", DOCS["комиссия"])
 
     else:
-        send_message(user_id, "Выберите кнопку ниже 👇")
+        send_message(user_id, "Выберите кнопку ниже 👇", None)
 
     return "ok"
 
