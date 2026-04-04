@@ -23,29 +23,21 @@ def get_keyboard():
     keyboard = {
         "one_time": False,
         "buttons": [
-            [
-                {"action": {"type": "text", "label": "📊 Штатное расписание"}, "color": "primary"}
-            ],
-            [
-                {"action": {"type": "text", "label": "🛡️ Согласие ПД"}, "color": "primary"}
-            ],
-            [
-                {"action": {"type": "text", "label": "🏠 Купля-продажа"}, "color": "secondary"}
-            ],
-            [
-                {"action": {"type": "text", "label": "📄 Договор комиссии"}, "color": "secondary"}
-            ]
+            [{"action": {"type": "text", "label": "📊 Штатное расписание"}, "color": "primary"}],
+            [{"action": {"type": "text", "label": "🛡️ Согласие ПД"}, "color": "primary"}],
+            [{"action": {"type": "text", "label": "🏠 Купля-продажа"}, "color": "secondary"}],
+            [{"action": {"type": "text", "label": "📄 Договор комиссии"}, "color": "secondary"}]
         ]
     }
     return json.dumps(keyboard, ensure_ascii=False)
 
 
-# 📤 ОТПРАВКА СООБЩЕНИЯ (ИСПРАВЛЕНО)
+# 📤 ОТПРАВКА СООБЩЕНИЯ (СТАБИЛЬНАЯ ВЕРСИЯ)
 def send_message(user_id, message=None, attachment=None):
     try:
         params = {
-            "peer_id": user_id,   # 🔥 ВАЖНО: именно peer_id
-            "message": message,
+            "peer_id": user_id,
+            "message": message or "",
             "random_id": random.randint(1, 10**9),
             "access_token": TOKEN,
             "v": "5.131"
@@ -54,13 +46,16 @@ def send_message(user_id, message=None, attachment=None):
         if attachment:
             params["attachment"] = attachment
 
-        requests.post("https://api.vk.com/method/messages.send", data=params)
+        requests.post(
+            "https://api.vk.com/method/messages.send",
+            params=params
+        )
 
     except Exception as e:
         print("VK SEND ERROR:", e)
 
 
-# 🚀 ping для Render
+# 🚀 ping (Render)
 @app.route("/ping", methods=["GET"])
 def ping():
     return "OK", 200
@@ -110,7 +105,7 @@ def vk_callback():
         send_message(user_id, "📄 Договор комиссии", DOCS["комиссия"])
 
     else:
-        send_message(user_id, "Выберите кнопку ниже 👇", None)
+        send_message(user_id, "Выберите кнопку ниже 👇")
 
     return "ok"
 
